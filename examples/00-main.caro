@@ -1,0 +1,3 @@
+fn main() {
+	syscall!(STD_WRITE, STDOUT, "Hello world!\n", 13);
+}
