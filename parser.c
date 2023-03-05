@@ -11,6 +11,8 @@ struct token* consume_token(struct token** tokens) {
 	
 }
 
+struct statement* parse_expression(struct token** tokens);
+
 struct statement* parse_primary_expression(struct token** tokens) {
 	
 	switch((*tokens)->type) {
@@ -25,10 +27,28 @@ struct statement* parse_primary_expression(struct token** tokens) {
 		stmt->num = *(int*)token->data;
 		return (struct statement*)stmt;
 	}
-	case TOKEN_IDENTIFIER:
+	case TOKEN_IDENTIFIER: {
 		/// TODO: create identifier node
-		assert(0);
-		break;
+		struct token* token = consume_token(tokens);
+		struct identifier* stmt = malloc(sizeof(struct identifier) + strlen(token->data) + 1);
+		if(!stmt) {
+			fprintf(stderr, "E: Failed to allocate memory!\n");
+			exit(1);
+		}
+		stmt->stmt.type = IDENTIFIER;
+		memcpy(stmt->symbol, token->data, strlen(token->data) + 1);
+		return (struct statement*)stmt;
+	}
+	case TOKEN_PUNCTUATOR:
+		if((*tokens)->data[0] != '(') return 0;
+		consume_token(tokens);
+		struct statement* stmt = parse_expression(tokens);
+		struct token* tok = consume_token(tokens);
+		if(tok->type != TOKEN_PUNCTUATOR || tok->data[0] != ')') {
+			fprintf(stderr, "Unclosed parenthesis in line %d!\n", tok->line);
+			exit(1);
+		}
+		return stmt;
 	default:
 		return 0;
 	}
@@ -143,13 +163,12 @@ struct ast* parse(struct token* tokens) {
 		
 	}
 	
-	*next = malloc(sizeof(struct statement_list) + sizeof(struct statement));
+	*next = malloc(sizeof(struct statement_list));
 	if(!*next) {
 		fprintf(stderr, "E: Failed to allocate memory!\n");
 		exit(1);
 	}
 	(*next)->next = 0;
-	(*next)->statement->type = AST_END;
 	
 	return ast;
 	

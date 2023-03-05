@@ -96,6 +96,10 @@ char bin_op_char[] = {'+', '-', '*', '/', '%'};
 void print_statement(struct statement* stmt, int indentation) {
 	
 	for(int i = 0; i < indentation; i++) printf("\t");
+	if(!stmt) {
+		printf("NULL\n");
+		return;
+	}
 	switch(stmt->type) {
 	case NUMERIC_LITERAL:
 		printf("%d\n", ((struct numeric_literal*)stmt)->num);
@@ -104,6 +108,10 @@ void print_statement(struct statement* stmt, int indentation) {
 		printf("BINARY EXPRESSION %c\n", bin_op_char[((struct binary_expression*)stmt)->operator]);
 		print_statement(((struct binary_expression*)stmt)->left, indentation + 1);
 		print_statement(((struct binary_expression*)stmt)->right, indentation + 1);
+		break;
+	case IDENTIFIER:
+		printf("%s\n", ((struct identifier*)stmt)->symbol);
+		break;
 	}
 	
 }
@@ -113,10 +121,9 @@ int main(int argc, char** argv) {
 	struct compilation_options opt = parse_args(argc, argv);
 	char* source = slurp_file(opt.input);
 	struct token* tokens = tokenize(source);
-	
 	struct ast* ast = parse(tokens);
 	
-	for(struct statement_list* node = ast->body; node->statement->type != AST_END; node = node->next) {
+	for(struct statement_list* node = ast->body; node->next; node = node->next) {
 		
 		print_statement(node->statement, 0);
 		

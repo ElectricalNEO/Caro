@@ -5,8 +5,7 @@ enum ast_node_type {
 	AST,
 	NUMERIC_LITERAL,
 	IDENTIFIER,
-	BINARY_EXPRESSION,
-	AST_END
+	BINARY_EXPRESSION
 };
 
 struct statement {
