@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "lexer.h"
+#include "parser.h"
 
 #define DEFAULT_OUTPUT "caro.out"
 
@@ -90,17 +91,35 @@ char* slurp_file(const char* path) {
 	
 }
 
+char bin_op_char[] = {'+', '-', '*', '/', '%'};
+
+void print_statement(struct statement* stmt, int indentation) {
+	
+	for(int i = 0; i < indentation; i++) printf("\t");
+	switch(stmt->type) {
+	case NUMERIC_LITERAL:
+		printf("%d\n", ((struct numeric_literal*)stmt)->num);
+		break;
+	case BINARY_EXPRESSION:
+		printf("BINARY EXPRESSION %c\n", bin_op_char[((struct binary_expression*)stmt)->operator]);
+		print_statement(((struct binary_expression*)stmt)->left, indentation + 1);
+		print_statement(((struct binary_expression*)stmt)->right, indentation + 1);
+	}
+	
+}
+
 int main(int argc, char** argv) {
 	
 	struct compilation_options opt = parse_args(argc, argv);
 	char* source = slurp_file(opt.input);
 	struct token* tokens = tokenize(source);
 	
-	for(struct token* token = tokens; token->type != TOKEN_END; token = (struct token*)((size_t)token + sizeof(struct token) + token->size)) {
-		if(token->type == TOKEN_KEYWORD) printf("KEYWORD\n");
-		else if(token->type == TOKEN_STRING_LITERAL || token->type == TOKEN_OPERATOR || token->type == TOKEN_IDENTIFIER) printf("%s\n", token->data);
-		else if(token->type == TOKEN_INTEGER_LITERAL) printf("%i\n", *(int*)token->data);
-		else if(token->type == TOKEN_PUNCTUATOR) printf("%c\n", token->data[0]);
+	struct ast* ast = parse(tokens);
+	
+	for(struct statement_list* node = ast->body; node->statement->type != AST_END; node = node->next) {
+		
+		print_statement(node->statement, 0);
+		
 	}
 	
 }
