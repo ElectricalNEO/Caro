@@ -5,7 +5,8 @@ enum ast_node_type {
 	AST,
 	NUMERIC_LITERAL,
 	IDENTIFIER,
-	BINARY_EXPRESSION
+	BINARY_EXPRESSION,
+	FUNCTION_DECLARATION
 };
 
 struct statement {
@@ -45,6 +46,12 @@ struct binary_expression {
 	struct statement* left;
 	struct statement* right;
 	enum binary_operation operator;
+};
+
+struct function_declaration {
+	struct statement stmt;
+	struct statement_list* body;
+	char name[0];
 };
 
 struct ast* parse(struct token* tokens);

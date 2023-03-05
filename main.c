@@ -112,6 +112,14 @@ void print_statement(struct statement* stmt, int indentation) {
 	case IDENTIFIER:
 		printf("%s\n", ((struct identifier*)stmt)->symbol);
 		break;
+	case FUNCTION_DECLARATION:
+		printf("FUNCTION DECLARATION %s\n", ((struct function_declaration*)stmt)->name);
+		for(struct statement_list* node = ((struct function_declaration*)stmt)->body; node->next; node = node->next) {
+			print_statement(node->statement, indentation + 1);
+		}
+		break;
+	default:
+		printf("STATEMENT %d\n", stmt->type);
 	}
 	
 }

@@ -28,7 +28,6 @@ struct statement* parse_primary_expression(struct token** tokens) {
 		return (struct statement*)stmt;
 	}
 	case TOKEN_IDENTIFIER: {
-		/// TODO: create identifier node
 		struct token* token = consume_token(tokens);
 		struct identifier* stmt = malloc(sizeof(struct identifier) + strlen(token->data) + 1);
 		if(!stmt) {
@@ -124,7 +123,86 @@ struct statement* parse_expression(struct token** tokens) {
 	
 }
 
+struct statement* parse_statement(struct token** tokens);
+
+struct statement_list* parse_block(struct token** tokens) {
+	
+	struct statement_list* list;
+	struct statement_list** next = &list;
+	
+	struct token* open_brace = consume_token(tokens);
+	if(open_brace->type != TOKEN_PUNCTUATOR || open_brace->data[0] != '{') {
+		fprintf(stderr, "E: Opening brace expected in line %d!\n", open_brace->line);
+		exit(1);
+	}
+	
+	while((*tokens)->type != TOKEN_PUNCTUATOR && (*tokens)->data[0] != '}') {
+		
+		struct statement* stmt = parse_statement(tokens);
+		*next = malloc(sizeof(struct statement_list));
+		if(!*next) {
+			fprintf(stderr, "E: Failed to allocate memory!\n");
+			exit(1);
+		}
+		(*next)->statement = stmt;
+		(*next)->next = 0;
+		next = &(*next)->next;
+		
+	}
+	consume_token(tokens); // consume closing brace
+	
+	*next = malloc(sizeof(struct statement_list));
+	if(!*next) {
+		fprintf(stderr, "E: Failed to allocate memory!\n");
+		exit(1);
+	}
+	(*next)->next = 0;
+	
+	return list;
+	
+}
+
+struct statement* parse_function_declaration(struct token** tokens) {
+	
+	consume_token(tokens); // FN keyword
+	if((*tokens)->type != TOKEN_IDENTIFIER) {
+		fprintf(stderr, "E: Expected identifier (function name) in line %d!\n", (*tokens)->line);
+		exit(1);
+	}
+	
+	struct token* name = consume_token(tokens); // function name
+	
+	struct token* open_paren = consume_token(tokens);
+	if(open_paren->type != TOKEN_PUNCTUATOR || open_paren->data[0] != '(') {
+		fprintf(stderr, "E: Expected opening parenthesis after function name in line %d!\n", (*tokens)->line);
+		exit(1);
+	}
+	
+	/// TODO: function arguments
+	
+	struct token* close_paren = consume_token(tokens);
+	if(close_paren->type != TOKEN_PUNCTUATOR || close_paren->data[0] != ')') {
+		fprintf(stderr, "E: Expected closing parenthesis after function name in line %d!\n", (*tokens)->line);
+		exit(1);
+	}
+	
+	struct function_declaration* stmt = malloc(sizeof(struct function_declaration) + strlen(name->data) + 1);
+	if(!stmt) {
+		fprintf(stderr, "E: Failed to allocate memory!\n");
+		exit(1);
+	}
+	
+	stmt->stmt.type = FUNCTION_DECLARATION;
+	memcpy(stmt->name, name->data, strlen(name->data) + 1);
+	stmt->body = parse_block(tokens);
+	
+	return (struct statement*)stmt;
+	
+}
+
 struct statement* parse_statement(struct token** tokens) {
+	
+	if((*tokens)->type == TOKEN_KEYWORD && *(enum keyword*)((*tokens)->data) == KEYWORD_FN) return parse_function_declaration(tokens);
 	
 	struct statement* ret = parse_expression(tokens);
 	

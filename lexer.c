@@ -186,6 +186,10 @@ struct token* tokenize(const char* source) {
 			i++;
 			continue;
 		}
+		if(source[i] == '#') {
+			while(source[i] != '\n' && source[i]) i++;
+			continue;
+		}
 		fprintf(stderr, "E: Invalid token in line %d: %c\n", line, source[i]);
 		exit(1);
 		
@@ -298,6 +302,10 @@ struct token* tokenize(const char* source) {
 			i++;
 			token->line = line;
 			token = (struct token*)((size_t)token + sizeof(struct token) + token->size);
+			continue;
+		}
+		if(source[i] == '#') {
+			while(source[i] != '\n' && source[i]) i++;
 			continue;
 		}
 		
