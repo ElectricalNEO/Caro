@@ -110,11 +110,13 @@ void build(struct ast* ast, const char* path, int preserve) {
 	char cmd[size + 1];
 	snprintf(cmd, size + 1, "gcc %s -o %s", p, path);
 	
-	system(cmd);
-	
+	int ret = system(cmd);
 	if(!preserve) remove(p);
+	if(ret) exit(1);
 	
 }
+
+/// TODO: check ast before generating c code (e.g. for invalid variables)
 
 int main(int argc, char** argv) {
 	

@@ -3,7 +3,8 @@
 
 enum keyword {
 	KEYWORD_INVALID,
-	KEYWORD_FN
+	KEYWORD_FN,
+	KEYWORD_RETURN
 };
 
 enum token_type {

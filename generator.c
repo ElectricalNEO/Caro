@@ -30,14 +30,18 @@ void generate_c_statement(struct statement* stmt, FILE* file) {
 		for(struct statement_list* node = ((struct function_declaration*)stmt)->body; node->next; node = node->next) {
 			if(node->statement->type == FUNCTION_DECLARATION) generate_c_statement(node->statement, file);
 		}
-		OUTPUT_WRITE("void %s(){", ((struct function_declaration*)stmt)->name);
+		OUTPUT_WRITE("%s %s(){\n",((struct function_declaration*)stmt)->return_type,  ((struct function_declaration*)stmt)->name);
 		for(struct statement_list* node = ((struct function_declaration*)stmt)->body; node->next; node = node->next) {
 			if(node->statement->type != FUNCTION_DECLARATION) {
 				generate_c_statement(node->statement, file);
-				OUTPUT_WRITE(";");
+				OUTPUT_WRITE(";\n");
 			}
 		}
 		OUTPUT_WRITE("}");
+		break;
+	case RETURN_STATEMENT:
+		OUTPUT_WRITE("return ");
+		generate_c_statement(((struct return_statement*)stmt)->value, file);
 		break;
 	default:
 		fprintf(stderr, "Unimplemented statement: %d\n", stmt->type);
@@ -54,6 +58,15 @@ void generate_c(struct ast* ast, const char* path) {
 		fprintf(stderr, "E: Failed to open/create file \"%s\"!\n", path);
 		exit(1);
 	}
+	
+	OUTPUT_WRITE("typedef unsigned char u8;");
+	OUTPUT_WRITE("typedef signed char i8;");
+	OUTPUT_WRITE("typedef unsigned short u16;");
+	OUTPUT_WRITE("typedef signed short i16;");
+	OUTPUT_WRITE("typedef unsigned int u32;");
+	OUTPUT_WRITE("typedef signed int i32;");
+	OUTPUT_WRITE("typedef unsigned long u64;");
+	OUTPUT_WRITE("typedef signed long i64;\n");
 	
 	for(struct statement_list* node = ast->body; node->next; node = node->next) {
 		

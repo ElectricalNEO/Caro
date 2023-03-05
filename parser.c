@@ -186,6 +186,20 @@ struct statement* parse_function_declaration(struct token** tokens, const char* 
 		exit(1);
 	}
 	
+	struct token* token = consume_token(tokens);
+	const char* return_type = "void";
+	
+	if(token->type == TOKEN_OPERATOR && !strcmp(token->data, "->")) {
+		
+		struct token* type = consume_token(tokens);
+		if(type->type != TOKEN_IDENTIFIER) {
+			fprintf(stderr, "E: Expected return type in line %d!\n", type->line);
+			exit(1);
+		}
+		return_type = type->data;
+		
+	}
+	
 	int prefixed = 0;
 	if(strlen(prefix)) prefixed = 1;
 	
@@ -200,6 +214,24 @@ struct statement* parse_function_declaration(struct token** tokens, const char* 
 	if(prefixed) stmt->name[strlen(prefix)] = '_';
 	memcpy(stmt->name + strlen(prefix) + prefixed, name->data, strlen(name->data) + 1);
 	stmt->body = parse_block(tokens, stmt->name);
+	stmt->return_type = return_type;
+	
+	return (struct statement*)stmt;
+	
+}
+
+struct statement* parse_return(struct token** tokens) {
+	
+	consume_token(tokens);
+	struct return_statement* stmt = malloc(sizeof(struct return_statement));
+	stmt->stmt.type = RETURN_STATEMENT;
+	stmt->value = parse_expression(tokens);
+	
+	struct token* tok = consume_token(tokens);
+	if(tok->type != TOKEN_PUNCTUATOR || tok->data[0] != ';') {
+		fprintf(stderr, "E: Unexpected token in line %d!\n", tok->line);
+		exit(1);
+	}
 	
 	return (struct statement*)stmt;
 	
@@ -208,12 +240,13 @@ struct statement* parse_function_declaration(struct token** tokens, const char* 
 struct statement* parse_statement(struct token** tokens, const char* func_prefix) {
 	
 	if((*tokens)->type == TOKEN_KEYWORD && *(enum keyword*)((*tokens)->data) == KEYWORD_FN) return parse_function_declaration(tokens, func_prefix);
+	if((*tokens)->type == TOKEN_KEYWORD && *(enum keyword*)((*tokens)->data) == KEYWORD_RETURN) return parse_return(tokens);
 	
 	struct statement* ret = parse_expression(tokens);
 	
 	struct token* tok = consume_token(tokens);
 	if(tok->type != TOKEN_PUNCTUATOR || tok->data[0] != ';') {
-		fprintf(stderr, "E: Unexpected token in line %d! Expected semicolon.\n", tok->line);
+		fprintf(stderr, "E: Unexpected token in line %d!\n", tok->line);
 		exit(1);
 	}
 	

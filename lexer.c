@@ -53,6 +53,7 @@ int is_operator(char ch) {
 
 enum keyword get_keyword(const char* start, int size) {
 	if(size == 2 && memcmp(start, "fn", 2)) return KEYWORD_FN;
+	if(size == 6 && memcmp(start, "return", 6)) return KEYWORD_RETURN;
 	return KEYWORD_INVALID;
 }
 
