@@ -123,9 +123,9 @@ struct statement* parse_expression(struct token** tokens) {
 	
 }
 
-struct statement* parse_statement(struct token** tokens);
+struct statement* parse_statement(struct token** tokens, const char* func_prefix);
 
-struct statement_list* parse_block(struct token** tokens) {
+struct statement_list* parse_block(struct token** tokens, const char* func_prefix) {
 	
 	struct statement_list* list;
 	struct statement_list** next = &list;
@@ -138,7 +138,7 @@ struct statement_list* parse_block(struct token** tokens) {
 	
 	while((*tokens)->type != TOKEN_PUNCTUATOR && (*tokens)->data[0] != '}') {
 		
-		struct statement* stmt = parse_statement(tokens);
+		struct statement* stmt = parse_statement(tokens, func_prefix);
 		*next = malloc(sizeof(struct statement_list));
 		if(!*next) {
 			fprintf(stderr, "E: Failed to allocate memory!\n");
@@ -162,7 +162,7 @@ struct statement_list* parse_block(struct token** tokens) {
 	
 }
 
-struct statement* parse_function_declaration(struct token** tokens) {
+struct statement* parse_function_declaration(struct token** tokens, const char* prefix) {
 	
 	consume_token(tokens); // FN keyword
 	if((*tokens)->type != TOKEN_IDENTIFIER) {
@@ -186,23 +186,28 @@ struct statement* parse_function_declaration(struct token** tokens) {
 		exit(1);
 	}
 	
-	struct function_declaration* stmt = malloc(sizeof(struct function_declaration) + strlen(name->data) + 1);
+	int prefixed = 0;
+	if(strlen(prefix)) prefixed = 1;
+	
+	struct function_declaration* stmt = malloc(sizeof(struct function_declaration) + strlen(name->data) + strlen(prefix) + 1 + prefixed);
 	if(!stmt) {
 		fprintf(stderr, "E: Failed to allocate memory!\n");
 		exit(1);
 	}
 	
 	stmt->stmt.type = FUNCTION_DECLARATION;
-	memcpy(stmt->name, name->data, strlen(name->data) + 1);
-	stmt->body = parse_block(tokens);
+	memcpy(stmt->name, prefix, strlen(prefix));
+	if(prefixed) stmt->name[strlen(prefix)] = '_';
+	memcpy(stmt->name + strlen(prefix) + prefixed, name->data, strlen(name->data) + 1);
+	stmt->body = parse_block(tokens, stmt->name);
 	
 	return (struct statement*)stmt;
 	
 }
 
-struct statement* parse_statement(struct token** tokens) {
+struct statement* parse_statement(struct token** tokens, const char* func_prefix) {
 	
-	if((*tokens)->type == TOKEN_KEYWORD && *(enum keyword*)((*tokens)->data) == KEYWORD_FN) return parse_function_declaration(tokens);
+	if((*tokens)->type == TOKEN_KEYWORD && *(enum keyword*)((*tokens)->data) == KEYWORD_FN) return parse_function_declaration(tokens, func_prefix);
 	
 	struct statement* ret = parse_expression(tokens);
 	
@@ -229,7 +234,7 @@ struct ast* parse(struct token* tokens) {
 	
 	while(tokens->type != TOKEN_END) {
 		
-		struct statement* stmt = parse_statement(&tokens);
+		struct statement* stmt = parse_statement(&tokens, "");
 		*next = malloc(sizeof(struct statement_list));
 		if(!*next) {
 			fprintf(stderr, "E: Failed to allocate memory!\n");
