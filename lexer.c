@@ -151,7 +151,7 @@ struct token* tokenize(const char* source) {
 		if(is_operator(source[i])) {
 			int start = i;
 			while(is_operator(source[i])) i++;
-			buf_size += sizeof(struct token) + i - start;
+			buf_size += sizeof(struct token) + i - start + 1;
 			continue;
 		}
 		if(source[i] == '"') {
@@ -197,10 +197,12 @@ struct token* tokenize(const char* source) {
 		exit(1);
 	}
 	struct token* token = tokens;
+	line = 1;
 	
 	for(int i = 0; source[i];) {
 		
 		if(is_whitespace(source[i])) {
+			if(source[i] == '\n') line++;
 			i++;
 			continue;
 		}
@@ -219,6 +221,7 @@ struct token* tokenize(const char* source) {
 				memcpy(token->data, &source[start], i - start);
 				token->data[i - start] = 0;
 			}
+			token->line = line;
 			token = (struct token*)((size_t)token + sizeof(struct token) + token->size);
 			continue;
 		}
@@ -228,6 +231,7 @@ struct token* tokenize(const char* source) {
 			token->type = TOKEN_INTEGER_LITERAL;
 			token->size = sizeof(int);
 			*(int*)token->data = parse_integer_literal(&source[start]);
+			token->line = line;
 			token = (struct token*)((size_t)token + sizeof(struct token) + token->size);
 			continue;
 		}
@@ -236,6 +240,7 @@ struct token* tokenize(const char* source) {
 			token->size = 1;
 			token->data[0] = source[i];
 			i++;
+			token->line = line;
 			token = (struct token*)((size_t)token + sizeof(struct token) + token->size);
 			continue;
 		}
@@ -246,6 +251,7 @@ struct token* tokenize(const char* source) {
 			token->size = i - start + 1;
 			memcpy(token->data, &source[start], i - start);
 			token->data[i - start] = 0;
+			token->line = line;
 			token = (struct token*)((size_t)token + sizeof(struct token) + token->size);
 			continue;
 		}
@@ -290,6 +296,7 @@ struct token* tokenize(const char* source) {
 			token->data[j] = 0;
 			token->size = j;
 			i++;
+			token->line = line;
 			token = (struct token*)((size_t)token + sizeof(struct token) + token->size);
 			continue;
 		}
@@ -298,6 +305,7 @@ struct token* tokenize(const char* source) {
 	
 	token->type = TOKEN_END;
 	token->size = 0;
+	token->line = line;
 	
 	return tokens;
 	

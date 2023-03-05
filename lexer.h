@@ -1,3 +1,4 @@
+#pragma once
 #include <stdio.h>
 
 enum keyword {
@@ -18,6 +19,7 @@ enum token_type {
 struct token {
 	enum token_type type;
 	int size;
+	int line;
 	char data[0];
 };
 
